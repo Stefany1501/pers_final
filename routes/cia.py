@@ -159,3 +159,73 @@ async def aeronaves_completas(
         })
     
     return resultado
+
+ # Consultar companhias aéreas com informações completas (incluindo aeronaves e voos)
+@router.get("/cia_completa", response_model=list[dict])
+async def cias_completas(
+    id: str = None,  # Torna o 'id' opcional
+    offset: int = Query(0, ge=0, description="Número de itens a pular"),
+    limit: int = Query(10, gt=0, le=100, description="Número máximo de itens a retornar")
+):
+    if id:
+        cia = await engine.find_one(Cia, Cia.id == ObjectId(id))
+        if not cia:
+            raise HTTPException(status_code=404, detail="Companhia aérea não encontrada")
+        
+        # Obter as aeronaves associadas à companhia
+        aeronaves = await engine.find(Aeronave, Aeronave.id.in_(cia.aeronaves)) if cia.aeronaves else []
+        # Obter os voos associados à companhia
+        voos = await engine.find(Voo, Voo.id.in_(cia.voos)) if cia.voos else []
+        
+        return [{
+            "id": str(cia.id),
+            "nome": cia.nome,
+            "cod_iata": cia.cod_iata,
+            "aeronaves": [{
+                "id": str(aero.id),
+                "modelo": aero.modelo,
+                "capacidade": aero.capacidade,
+                "last_check": aero.last_check,
+                "next_check": aero.next_check
+            } for aero in aeronaves],
+            "voos": [{
+                "id": str(voo.id),
+                "numero_voo": voo.numero_voo,
+                "origem": voo.origem,
+                "destino": voo.destino,
+                "hr_partida": voo.hr_partida,
+                "hr_chegada": voo.hr_chegada,
+                "status": voo.status
+            } for voo in voos]
+        }]
+    
+    # Se 'id' não for fornecido, retorna todas as companhias com paginação
+    cias = await engine.find(Cia, skip=offset, limit=limit)
+    
+    resultado = []
+    for cia in cias:
+        aeronaves = await engine.find(Aeronave, Aeronave.id.in_(cia.aeronaves)) if cia.aeronaves else []
+        voos = await engine.find(Voo, Voo.id.in_(cia.voos)) if cia.voos else []
+        resultado.append({
+            "id": str(cia.id),
+            "nome": cia.nome,
+            "cod_iata": cia.cod_iata,
+            "aeronaves": [{
+                "id": str(aero.id),
+                "modelo": aero.modelo,
+                "capacidade": aero.capacidade,
+                "last_check": aero.last_check,
+                "next_check": aero.next_check
+            } for aero in aeronaves],
+            "voos": [{
+                "id": str(voo.id),
+                "numero_voo": voo.numero_voo,
+                "origem": voo.origem,
+                "destino": voo.destino,
+                "hr_partida": voo.hr_partida,
+                "hr_chegada": voo.hr_chegada,
+                "status": voo.status
+            } for voo in voos]
+        })
+    
+    return resultado
