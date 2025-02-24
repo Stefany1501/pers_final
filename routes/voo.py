@@ -21,7 +21,6 @@ async def create_voo(voo_data: Voo):
     if isinstance(voo_data.hr_chegada, str):
         voo_data.hr_chegada = datetime.fromisoformat(voo_data.hr_chegada.replace("Z", "+00:00"))
 
-    # Salvar voo
     await engine.save(voo_data)
     return voo_data
 
@@ -110,7 +109,7 @@ async def voos_completos(
     offset: int = Query(0, ge=0, description="Número de itens a pular"),
     limit: int = Query(10, gt=0, le=100, description="Número máximo de itens a retornar")
 ):
-    # Se 'id' for fornecido, buscar voo específico
+    # buscar voo específico
     if id:
         voo = await engine.find_one(Voo, Voo.id == ObjectId(id))
         
@@ -118,8 +117,8 @@ async def voos_completos(
             raise HTTPException(status_code=404, detail="Voo não encontrado")
         
         # Obter informações da companhia e da aeronave
-        cia = await engine.find_one(Cia, Cia.id == voo.cia_id)
-        aeronave = await engine.find_one(Aeronave, Aeronave.id == voo.aeronave_id)
+        cia = await engine.find_one(Cia, Cia.id == voo.cia)
+        aeronave = await engine.find_one(Aeronave, Aeronave.id == voo.aeronave)
 
         return [{
             "id": str(voo.id),
@@ -141,13 +140,13 @@ async def voos_completos(
             }
         }]
 
-    # Se 'id' não for fornecido, retorna todos os voos com paginação
+    # Se id não for fornecido retorna todos os voos com paginação
     voos = await engine.find(Voo, skip=offset, limit=limit)
 
     resultado = []
     for voo in voos:
-        cia = await engine.find_one(Cia, Cia.id == voo.cia_id)
-        aeronave = await engine.find_one(Aeronave, Aeronave.id == voo.aeronave_id)
+        cia = await engine.find_one(Cia, Cia.id == voo.cia)
+        aeronave = await engine.find_one(Aeronave, Aeronave.id == voo.aeronave)
         
         resultado.append({
             "id": str(voo.id),
