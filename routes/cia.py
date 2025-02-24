@@ -109,57 +109,6 @@ async def count_voos(cia_id: str):
     voos = await engine.find(Voo, Voo.cia == cia.id)
     return len(voos)
 
-@router.get("/completa", response_model=list[dict])
-async def aeronaves_completas(
-    id: str = None,  # Torna o 'id' opcional
-    offset: int = Query(0, ge=0, description="Número de itens a pular"),
-    limit: int = Query(10, gt=0, le=100, description="Número máximo de itens a retornar")
-):
-    # Se 'id' for fornecido, buscar a aeronave específica
-    if id:
-        aeronave = await engine.find_one(Aeronave, Aeronave.id == ObjectId(id))
-        
-        if not aeronave:
-            raise HTTPException(status_code=404, detail="Aeronave não encontrada")
-        
-        # Obter informações da companhia aérea
-        cia = await engine.find_one(Cia, Cia.id == aeronave.cia)
-        
-        # Retorno com as informações completas da aeronave
-        return [{
-            "id": str(aeronave.id),
-            "modelo": aeronave.modelo,
-            "capacidade": aeronave.capacidade,
-            "last_check": aeronave.last_check,
-            "next_check": aeronave.next_check,
-            "cia": {
-                "id": str(cia.id) if cia else None,
-                "nome": cia.nome if cia else None,
-                "cod_iata": cia.cod_iata if cia else None
-            }
-        }]
-    
-    # Se 'id' não for fornecido, retorna todas as aeronaves com paginação
-    aeronaves = await engine.find(Aeronave, skip=offset, limit=limit)
-    
-    resultado = []
-    for aeronave in aeronaves:
-        cia = await engine.find_one(Cia, Cia.id == aeronave.cia)
-        resultado.append({
-            "id": str(aeronave.id),
-            "modelo": aeronave.modelo,
-            "capacidade": aeronave.capacidade,
-            "last_check": aeronave.last_check,
-            "next_check": aeronave.next_check,
-            "cia": {
-                "id": str(cia.id) if cia else None,
-                "nome": cia.nome if cia else None,
-                "cod_iata": cia.cod_iata if cia else None
-            }
-        })
-    
-    return resultado
-
  # Consultar companhias aéreas com informações completas (incluindo aeronaves e voos)
 @router.get("/cia_completa", response_model=list[dict])
 async def cias_completas(
