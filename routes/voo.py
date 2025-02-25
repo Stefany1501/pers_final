@@ -71,7 +71,6 @@ async def read_voos_filtro(
     id: str = None,
     data_inicio: str = None,
     data_fim: str = None,
-    companhia_nome: str = None,
     busca_texto: str = None,
     ordenacao: str = Query(None, description="Ordenar por 'hr_partida' ou 'hr_chegada'")
 ):
